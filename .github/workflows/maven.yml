@@ -1,23 +1,22 @@
-```yaml
+
 name: Grade Calculator CI/CD
 
 on:
   push:
-    branches: ["main"]
-
+    branches:
+      - main
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout source code
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      # 2. Setup Java 17
       - name: Set up Java 17
         uses: actions/setup-java@v6
         with:
@@ -25,11 +24,9 @@ jobs:
           java-version: '17'
           cache: maven
 
-      # 3. Build Maven project and run JUnit tests
       - name: Build Maven project and run JUnit tests
         run: mvn clean verify
 
-      # 4. Login to Docker Hub
       - name: Login to Docker Hub
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
@@ -37,7 +34,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 5. Build and push Docker image
       - name: Build and push Docker image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v6
@@ -46,30 +42,25 @@ jobs:
           push: true
           tags: rakshitharohini/grade-calculator:latest
 
-      # 6. Pull image from Docker Hub
       - name: Pull image from Docker Hub
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: docker pull rakshitharohini/grade-calculator:latest
 
-      # 7. Test Docker Hub image
       - name: Test Docker Hub image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           echo "67" | docker run --rm -i rakshitharohini/grade-calculator:latest | tee output.txt
           grep -F "Student Grade: C" output.txt
 
-      # 8. Display Docker Hub connection link
       - name: Docker Hub Connection Link
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          echo "## Grade Calculator CI/CD Deployment" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Docker Hub Connection" >> $GITHUB_STEP_SUMMARY
-          echo "Docker image: rakshitharohini/grade-calculator:latest" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "[Open Docker Hub Repository](https://hub.docker.com/r/rakshitharohini/grade-calculator)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Pull Docker Image" >> $GITHUB_STEP_SUMMARY
-          echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "docker pull rakshitharohini/grade-calculator:latest" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "## Grade Calculator CI/CD Deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Docker image: rakshitharohini/grade-calculator:latest" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "[Open Docker Hub Repository](https://hub.docker.com/r/rakshitharohini/grade-calculator)" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```bash' >> "$GITHUB_STEP_SUMMARY"
+          echo "docker pull rakshitharohini/grade-calculator:latest" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
