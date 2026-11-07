@@ -3,16 +3,19 @@ name: Grade Calculator CI/CD
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
 
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
+
       # 1. Checkout source code
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -27,7 +30,7 @@ jobs:
 
       # 3. Build Maven project and run JUnit tests
       - name: Build Maven project and run JUnit tests
-        run: mvn clean verify
+        run: mvn -B clean verify
 
       # 4. Login to Docker Hub
       - name: Login to Docker Hub
@@ -49,7 +52,8 @@ jobs:
       # 6. Pull image from Docker Hub
       - name: Pull image from Docker Hub
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: docker pull rakshitharohini/grade-calculator:latest
+        run: |
+          docker pull rakshitharohini/grade-calculator:latest
 
       # 7. Test Docker Hub image
       - name: Test Docker Hub image
@@ -57,3 +61,18 @@ jobs:
         run: |
           echo "67" | docker run --rm -i rakshitharohini/grade-calculator:latest | tee output.txt
           grep -F "Student Grade: C" output.txt
+
+      # 8. Docker Hub repository link
+      - name: Docker Hub Deployment Summary
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "## Grade Calculator Docker Hub Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Docker image successfully built, pushed, pulled and tested." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[Open Grade Calculator Docker Hub Repository](https://hub.docker.com/r/rakshitharohini/grade-calculator)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Docker Pull Command" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "docker pull rakshitharohini/grade-calculator:latest" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
