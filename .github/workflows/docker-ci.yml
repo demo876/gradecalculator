@@ -1,0 +1,50 @@
+
+name: Build and Test with Docker Hub
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Maven Build and Test
+        run: mvn -B clean verify
+
+      - name: Docker Hub Login
+        if: github.event_name == 'push'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker Image
+        run: docker build -t rakshitharohini/grade-calculator:latest .
+
+      - name: Push to Docker Hub
+        if: github.event_name == 'push'
+        run: docker push rakshitharohini/grade-calculator:latest
+
+      - name: Pull from Docker Hub
+        if: github.event_name == 'push'
+        run: docker pull rakshitharohini/grade-calculator:latest
+
+      - name: Test Docker Hub Image
+        if: github.event_name == 'push'
+        run: |
+          echo "67" | docker run --rm -i rakshitharohini/grade-calculator:latest | tee output.txt
+          grep -F "Student Grade: C" output.txt
